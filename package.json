@@ -1,0 +1,19 @@
+{
+  "name": "epromise",
+  "version": "0.1.0",
+  "description": "a simple es6 promise implementation",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "promise",
+    "promise a+",
+    "es6"
+  ],
+  "author": "eJay",
+  "license": "MIT",
+  "devDependencies": {
+    "promises-aplus-tests": "^2.1.2"
+  }
+}

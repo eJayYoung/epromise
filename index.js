@@ -87,6 +87,95 @@ class Promise {
             }
         }, 0)
     }
+    catch(onRejected) {
+        return this.then(null, onRejected);
+    }
+    finally(onFinally) {
+        if (typeof onFinally !== 'function') {
+            onFinally = noop;
+        }
+        return this.then((val) => {
+            return Promise.resolve(onFinally()).then(() => val);
+        }, (reason) => {
+            return Promise.reject(onFinally()).then(() => {
+                throw reason
+            });
+        })
+    }
+}
+
+Promise.resolve = (result) => {
+    return new Promise(resolve => resolve(result));
+}
+
+Promise.reject = (reason) => {
+    return new Promise((resolve, reject) => reject(reason));
+}
+
+Promise.all = (iterator) => {
+    if (!isIterable(iterator)) return Promise.reject(new TypeError(`${iterator} is not iterable`));
+    return new Promise((resolve, reject) => {
+        const results = [];
+        let i = -1;
+        let resolved = 0;
+        let called = false;
+        let len = iterator.length;
+        if (!len) {
+            resolve([]);
+        }
+        while(++i < len) {
+            allResolver(iterator[i], i);
+        }
+        function allResolver(value, i) {
+            const promise = value instanceof Promise ? value : Promise.resolve(value);
+            promise.then((result) => {
+                results[i] = result;
+                if (++resolved === len && !called) {
+                    called = true;
+                    resolve(results);
+                }
+            }, (reason) => {
+                if (!called) {
+                    called = true;
+                    reject(reason);
+                }
+            })
+        }
+    })
+}
+
+Promise.race = (iterator) => {
+    if (!isIterable(iterator)) return Promise.reject(new TypeError(`${iterator} is not iterable`));
+    return new Promise((resolve, reject) => {
+        let i = -1;
+        let resolved = 0;
+        let called = false;
+        let len = iterator.length;
+        if (!len) {
+            resolve([]);
+        }
+        while(++i < len) {
+            allResolver(iterator[i], i);
+        }
+        function allResolver(value, i) {
+            const promise = value instanceof Promise ? value : Promise.resolve(value);
+            promise.then((result) => {
+                if (++resolved === len && !called) {
+                    called = true;
+                    resolve(result);
+                }
+            }, (reason) => {
+                if (!called) {
+                    called = true;
+                    reject(reason);
+                }
+            })
+        }
+    })
+}
+
+function isIterable(val) {
+    return val !== null && typeof val[Symbol.iterator] === 'function';
 }
 
 function Resolve(promise, x) {
